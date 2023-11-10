@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>File to Video</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file">
+        <button type="submit">Upload</button>
+    </form>
+
+    <h1>Video to File</h1>
+    <form id="uploadForm2">
+        <input type="file" id="fileInput2" name="file" accept=".mp4">
+        <input type="text" id="extensionInput" name="extension">
+        <button type="submit">Download</button>
+    </form>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('https://bseflask.onrender.com/filetovideo', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+        
+        document.getElementById('uploadForm2').addEventListener('submit', function(event){
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput2');
+            const file = fileInput.files[0];
+            const extension = document.getElementById('extensionInput').value;
+            const formData = new FormData();
+
+            formData.append('file', file);
+            formData.append('extension', extension);
+
+            fetch('https://bseflask.onrender.com/videotofile', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+
+    </script>
+</body>
+</html>
