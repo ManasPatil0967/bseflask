@@ -25,7 +25,8 @@ class FileToVideo(Resource):
 
         os.remove(file.filename)
 
-        return send_file('video/'+video_filename)
+        return send_file('video/'+video_filename, as_attachment=True,
+                         download_name=video_filename)
 
 
 class VideoToFile(Resource):
@@ -37,7 +38,8 @@ class VideoToFile(Resource):
         filename = videoToFile(file.filename, extension)
         os.remove(file.filename)
 
-        return send_file('video/'+filename+'.'+extension)
+        return send_file('output/'+filename+'.'+extension, as_attachment=True,
+                         download_name=filename+'.'+extension)
 
 
 def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
@@ -45,7 +47,8 @@ def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
     file_size = os.path.getsize(file_name)
     bin_string = ""
     with open(file_name, "rb") as f:
-        for chunk in tqdm(iterable=iter(lambda: f.read(1024), b""), total=math.ceil(file_size/1024), unit="KB"):
+        for chunk in tqdm(iterable=iter(lambda: f.read(1024), b""),
+                          total=math.ceil(file_size/1024), unit="KB"):
             bin_string += "".join(f"{byte:08b}" for byte in chunk)
 
     num_pixels = len(bin_string)
@@ -100,10 +103,7 @@ def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
 def videoToFile(file, extension):
     # Extract frames from video
     frames = []
-    dir_path = os.getcwd()
     vid = imageio.get_reader(file, 'ffmpeg')
-
-    fps = vid.get_meta_data()['fps']
 
     num_frames = vid.get_length()
 
