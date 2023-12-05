@@ -1,4 +1,4 @@
-from flask import Flask, request 
+from flask import Flask, request, send_file
 from flask_cors import CORS
 from flask_restful import Resource, Api
 
@@ -8,13 +8,13 @@ import os
 from moviepy.editor import ImageSequenceClip
 import imageio
 import numpy as np
-from PIL import Image
 import io
 from tqdm import tqdm
 
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
+
 
 class FileToVideo(Resource):
     def post(self):
@@ -25,7 +25,8 @@ class FileToVideo(Resource):
 
         os.remove(file.filename)
 
-        return send_file('video/'+video_filename, as_attachment=True) 
+        return send_file('video/'+video_filename, as_attachment=True)
+
 
 class VideoToFile(Resource):
     def post(self):
@@ -33,14 +34,14 @@ class VideoToFile(Resource):
         extension = request.form['extension']
         file.save(file.filename)
 
-        videoToFile(file.filename, extension)
-        
+        filename = videoToFile(file.filename, extension)
         os.remove(file.filename)
 
-        return send_file('output/'+file_name+'.'+extension, as_attachment=True) 
+        return send_file('output/'+filename+'.'+extension, as_attachment=True) 
+
 
 def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
-    #Convert file to binary data 
+    # Convert file to binary data 
     file_size = os.path.getsize(file_name)
     bin_string = ""
     with open(file_name, "rb") as f:
@@ -52,8 +53,7 @@ def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
     pixels_per_image = (width // pixel_size) * (height // pixel_size)
 
     num_images = math.ceil(num_pixels / pixels_per_image)
-    
-    #Convert binary data to frames 
+    # Convert binary data to frames
     frames = []
 
     for i in tqdm(range(num_images)):
@@ -82,7 +82,7 @@ def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
                 y2 = y1 + pixel_size
 
                 img.paste(color, (x1, y1, x2, y2))
-    #Convert frames to video 
+    # Convert frames to video
         with io.BytesIO() as f:
             img.save(f, format='PNG')
             frame = np.array(Image.open(f))
@@ -90,13 +90,15 @@ def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
 
     clip = ImageSequenceClip(frames, fps=fps)
 
-    #Save video
+    # Save video
     video_filename = file_name.split('.')[0] + '.mp4'
     clip.write_videofile('video/'+video_filename, fps=fps)
 
+    return video_filename
+
 
 def videoToFile(file, extension):
-    #Extract frames from video
+    # Extract frames from video
     frames = []
     dir_path = os.getcwd()
     vid = imageio.get_reader(file, 'ffmpeg')
@@ -110,7 +112,7 @@ def videoToFile(file, extension):
             frames.append(frame)
             pbar.update(1)
 
-    #Convert frames to binary data
+    # Convert frames to binary data
     threshold = 128
 
     binary_digits = ''
@@ -129,7 +131,7 @@ def videoToFile(file, extension):
                 else:
                     binary_digits += '0'
 
-    #Convert binary data to file
+    # Convert binary data to file
     binary_data = bytes(int(binary_digits[i:i+8], 2)
                         for i in range(0, len(binary_digits), 8))
 
@@ -142,6 +144,9 @@ def videoToFile(file, extension):
                 pbar.update(1024)
 
         print(f"Binary data converted to {filename})")
+
+    return file_name
+
 
 api.add_resource(FileToVideo, '/filetovideo')
 api.add_resource(VideoToFile, '/videotofile')
