@@ -25,7 +25,7 @@ class FileToVideo(Resource):
 
         os.remove(file.filename)
 
-        return send_file('video/'+video_filename, as_attachment=True)
+        return send_file('video/'+video_filename)
 
 
 class VideoToFile(Resource):
@@ -37,11 +37,11 @@ class VideoToFile(Resource):
         filename = videoToFile(file.filename, extension)
         os.remove(file.filename)
 
-        return send_file('output/'+filename+'.'+extension, as_attachment=True) 
+        return send_file('video/'+filename+'.'+extension)
 
 
 def fileToVideo(file_name, width=1920, height=1080, pixel_size=4, fps=24):
-    # Convert file to binary data 
+    # Convert file to binary data
     file_size = os.path.getsize(file_name)
     bin_string = ""
     with open(file_name, "rb") as f:
